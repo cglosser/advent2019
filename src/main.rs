@@ -1,10 +1,7 @@
-mod day01;
-mod day02;
-mod day04;
-mod problem;
-mod utils;
+mod solutions;
+use solutions::*;
 
-use problem::Problem;
+mod utils;
 
 fn main() {
     day01::part1();

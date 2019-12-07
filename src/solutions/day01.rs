@@ -1,6 +1,13 @@
 use std::fs::File;
 
-use crate::utils;
+use std::io::{BufRead, BufReader, Error, ErrorKind, Read};
+
+pub fn read<R: Read>(io: R) -> Result<Vec<i64>, Error> {
+    let br = BufReader::new(io);
+    br.lines()
+        .map(|line| line.and_then(|v| v.parse().map_err(|e| Error::new(ErrorKind::InvalidData, e))))
+        .collect()
+}
 
 const INPUT: &str = "inputs/day01_input.txt";
 
@@ -30,7 +37,7 @@ impl Iterator for FuelSequence {
 }
 
 fn eval(identifier: &str, f: fn(&i64) -> i64) {
-    let numbers = utils::read(File::open(INPUT).unwrap()).unwrap();
+    let numbers = read(File::open(INPUT).unwrap()).unwrap();
     let result: i64 = numbers.iter().map(f).sum();
     println!("{}: {}", identifier, result);
 }

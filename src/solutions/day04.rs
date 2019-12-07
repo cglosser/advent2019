@@ -1,4 +1,4 @@
-use crate::problem::Problem;
+use crate::solutions::Solution;
 use itertools::Itertools;
 
 pub struct Day04 {}
@@ -43,7 +43,7 @@ fn valid_without_groups(password: &i32) -> bool {
         && chars.iter().tuple_windows().all(|(a, b)| a <= b)
 }
 
-impl Problem for Day04 {
+impl Solution for Day04 {
     fn part_one(&self, input: &str) -> String {
         let bounds = bounds(&input);
         (bounds[0]..=bounds[1]).filter(valid).count().to_string()
