@@ -1,38 +1,29 @@
-pub enum Operation {
-    ADD,
-    MULTIPLY,
-    HALT,
-}
+mod instruction;
+mod mode;
+mod operation;
 
-impl Operation {
-    pub fn from_i32(value: i32) -> Option<Operation> {
-        match value {
-            1 => Some(Operation::ADD),
-            2 => Some(Operation::MULTIPLY),
-            99 => Some(Operation::HALT),
-            _ => None,
-        }
-    }
-}
+use instruction::*;
+use mode::*;
+use operation::*;
 
 pub fn run(mut tape: Vec<i32>) -> Vec<i32> {
     let mut i = 0;
     loop {
-        match Operation::from_i32(tape[i]) {
-            Some(Operation::ADD) => {
+        match Operation::try_from(tape[i]) {
+            Ok(Operation::Add) => {
                 let left = tape[i + 1] as usize;
                 let right = tape[i + 2] as usize;
                 let dest = tape[i + 3] as usize;
                 tape[dest] = tape[left] + tape[right];
             }
-            Some(Operation::MULTIPLY) => {
+            Ok(Operation::Multiply) => {
                 let left = tape[i + 1] as usize;
                 let right = tape[i + 2] as usize;
                 let dest = tape[i + 3] as usize;
                 tape[dest] = tape[left] * tape[right];
             }
-            Some(Operation::HALT) => break,
-            None => panic!("Invalid operation"),
+            Ok(Operation::Halt) => break,
+            _ => panic!("Unsupported operation"),
         }
         i += 4;
     }
