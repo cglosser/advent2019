@@ -23,3 +23,13 @@ impl TryFrom<i32> for Operation {
         }
     }
 }
+
+impl Operation {
+    pub fn arity(&self) -> i32 {
+        match self {
+            Operation::Add | Operation::Multiply => 4,
+            Operation::ReadInput | Operation::WriteOutput => 2,
+            Operation::Halt => 0,
+        }
+    }
+}

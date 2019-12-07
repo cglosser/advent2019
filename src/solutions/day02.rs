@@ -11,7 +11,7 @@ impl Solution for Day02 {
             .collect();
         tape[1] = 12;
         tape[2] = 02;
-        intcode::run(tape)[0].to_string()
+        intcode::run(tape).0[0].to_string()
     }
 
     fn part_two(&self, input: &str) -> String {
@@ -27,7 +27,7 @@ impl Solution for Day02 {
                 let mut program = tape.clone();
                 program[1] = noun;
                 program[2] = verb;
-                let output = intcode::run(program)[0];
+                let output = intcode::run(program).0[0];
                 if output == TARGET {
                     return (100 * noun + verb).to_string();
                 }

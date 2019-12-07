@@ -1,4 +1,4 @@
-use crate::utilities::intcode::{mode::Mode, operation::Operation};
+pub use crate::utilities::intcode::{mode::Mode, operation::Operation};
 pub use std::convert::TryFrom;
 
 #[derive(Debug, PartialEq)]
@@ -38,7 +38,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn day_05_examples() {
+    fn day05_examples() {
         assert_eq!(
             Instruction::try_from(1002),
             Ok(Instruction {
