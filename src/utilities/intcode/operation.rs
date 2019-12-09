@@ -1,35 +1,58 @@
-pub use std::convert::TryFrom;
+use crate::utilities::intcode::{execution_error::ExecutionError, parameter_mode::ParameterMode};
+use std::convert::TryFrom;
 
-#[derive(Debug, PartialEq)]
 pub enum Operation {
-    Add,
-    Multiply,
-    ReadInput,
-    WriteOutput,
+    Add(ParameterMode, ParameterMode, ParameterMode),
+    Multiply(ParameterMode, ParameterMode, ParameterMode),
     Halt,
 }
 
 impl TryFrom<i32> for Operation {
-    type Error = &'static str;
+    type Error = ExecutionError;
 
-    fn try_from(value: i32) -> Result<Operation, Self::Error> {
-        match value {
-            1 => Ok(Operation::Add),
-            2 => Ok(Operation::Multiply),
-            3 => Ok(Operation::ReadInput),
-            4 => Ok(Operation::WriteOutput),
+    fn try_from(opcode: i32) -> Result<Operation, Self::Error> {
+        match opcode % 100 {
+            1 => Ok(Operation::Add(
+                ParameterMode::try_from_opcode(opcode, 0)?,
+                ParameterMode::try_from_opcode(opcode, 1)?,
+                ParameterMode::try_from_opcode(opcode, 2)?,
+            )),
+            2 => Ok(Operation::Multiply(
+                ParameterMode::try_from_opcode(opcode, 0)?,
+                ParameterMode::try_from_opcode(opcode, 1)?,
+                ParameterMode::try_from_opcode(opcode, 2)?,
+            )),
             99 => Ok(Operation::Halt),
-            _ => Err("Invalid conversion from i32 to Operation"),
+            _ => Err(ExecutionError::UnknownOpcode(opcode)),
         }
     }
 }
 
-impl Operation {
-    pub fn arity(&self) -> i32 {
-        match self {
-            Operation::Add | Operation::Multiply => 4,
-            Operation::ReadInput | Operation::WriteOutput => 2,
-            Operation::Halt => 0,
+#[cfg(test)]
+mod tests {
+    use super::*;
+    mod aoc_examples {
+        use super::*;
+
+        #[test]
+        fn day05() -> Result<(), ExecutionError> {
+            if let Operation::Multiply(p1, p2, p3) = Operation::try_from(1002)? {
+                assert_eq!(p1, ParameterMode::Position);
+                assert_eq!(p2, ParameterMode::Immediate);
+                assert_eq!(p3, ParameterMode::Position);
+            } else {
+                panic!();
+            }
+
+            if let Operation::Add(p1, p2, p3) = Operation::try_from(1101)? {
+                assert_eq!(p1, ParameterMode::Immediate);
+                assert_eq!(p2, ParameterMode::Immediate);
+                assert_eq!(p3, ParameterMode::Position);
+            } else {
+                panic!();
+            }
+
+            Ok(())
         }
     }
 }

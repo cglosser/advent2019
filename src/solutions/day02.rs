@@ -5,13 +5,16 @@ pub struct Day02 {}
 
 impl Solution for Day02 {
     fn part_one(&self, input: &str) -> String {
-        let mut tape: Vec<i32> = input
+        let tape: Vec<i32> = input
             .split(',')
             .map(|t| t.parse::<i32>().unwrap())
             .collect();
-        tape[1] = 12;
-        tape[2] = 02;
-        intcode::run(tape).0[0].to_string()
+        let mut vm = intcode::VirtualMachine::new(tape, None);
+        vm.set_cell(1, 12).unwrap();
+        vm.set_cell(2, 02).unwrap();
+        vm.run().unwrap();
+
+        vm.get_cell(0).unwrap().to_string()
     }
 
     fn part_two(&self, input: &str) -> String {
@@ -24,10 +27,12 @@ impl Solution for Day02 {
 
         for noun in 0..=99 {
             for verb in 0..=99 {
-                let mut program = tape.clone();
-                program[1] = noun;
-                program[2] = verb;
-                let output = intcode::run(program).0[0];
+                let mut vm = intcode::VirtualMachine::new(tape.clone(), None);
+                vm.set_cell(1, noun).unwrap();
+                vm.set_cell(2, verb).unwrap();
+                vm.run().unwrap();
+
+                let output = vm.get_cell(0).unwrap();
                 if output == TARGET {
                     return (100 * noun + verb).to_string();
                 }
