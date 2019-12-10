@@ -40,19 +40,30 @@ impl VirtualMachine {
 
         let opcode = self.get_cell(self.cursor)?;
         match Operation::try_from(opcode)? {
-            Add(lmode, rmode, _) => {
+            Add(lmode, rmode) => {
                 let left = self.get_argument(lmode, 1)?;
                 let right = self.get_argument(rmode, 2)?;
-                let output = self.get_argument(ParameterMode::Immediate, 3)?;
-                self.set_cell(Self::as_index(output)?, left + right)?;
+                let dest = self.get_argument(ParameterMode::Immediate, 3)?;
+                self.set_cell(Self::as_index(dest)?, left + right)?;
                 self.cursor += 4;
             }
-            Multiply(lmode, rmode, _) => {
+            Multiply(lmode, rmode) => {
                 let left = self.get_argument(lmode, 1)?;
                 let right = self.get_argument(rmode, 2)?;
-                let output = self.get_argument(ParameterMode::Immediate, 3)?;
-                self.set_cell(Self::as_index(output)?, left * right)?;
+                let dest = self.get_argument(ParameterMode::Immediate, 3)?;
+                self.set_cell(Self::as_index(dest)?, left * right)?;
                 self.cursor += 4;
+            }
+            Input => {
+                let dest = self.get_argument(ParameterMode::Position, 1)?;
+                let val = self.input.pop().ok_or(ExecutionError::InputError)?;
+                self.set_cell(Self::as_index(dest)?, val)?;
+                self.cursor += 2;
+            }
+            Output(mode) => {
+                let val = self.get_argument(mode, 1)?;
+                self.output.push(val);
+                self.cursor += 2;
             }
             Halt => {
                 self.halted = true;
@@ -110,14 +121,14 @@ mod tests {
     mod aoc_examples {
         use super::*;
 
+        fn check(input: Vec<i32>, output: Vec<i32>) {
+            let mut vm = VirtualMachine::new(input, None);
+            vm.run().expect("Could not run intcode");
+            assert!(vm.memory().iter().eq(output.iter()));
+        }
+
         #[test]
         fn day02() {
-            fn check(input: Vec<i32>, output: Vec<i32>) {
-                let mut vm = VirtualMachine::new(input, None);
-                vm.run().expect("Could not run intcode");
-                assert!(vm.memory().iter().eq(output.iter()));
-            }
-
             check(vec![1, 0, 0, 0, 99], vec![2, 0, 0, 0, 99]);
             check(vec![2, 3, 0, 3, 99], vec![2, 3, 0, 6, 99]);
             check(vec![2, 4, 4, 5, 99, 0], vec![2, 4, 4, 5, 99, 9801]);
@@ -125,6 +136,13 @@ mod tests {
                 vec![1, 1, 1, 4, 99, 5, 6, 0, 99],
                 vec![30, 1, 1, 4, 2, 5, 6, 0, 99],
             );
+        }
+
+        #[test]
+        fn day05() {
+            let mut vm = VirtualMachine::new(vec![1101, 100, -1, 4, 0], None);
+            vm.run().expect("Could not run intcode");
+            check(vec![1101, 100, -1, 4, 0], vec![1101, 100, -1, 4, 99]);
         }
     }
 }
