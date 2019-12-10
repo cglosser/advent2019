@@ -40,27 +40,55 @@ impl VirtualMachine {
 
         let opcode = self.get_word(self.cursor)?;
         match Operation::try_from(opcode)? {
-            Add(lmode, rmode, dest_mode) => {
-                let a = self.get_argument(lmode, 1)?;
-                let b = self.get_argument(rmode, 2)?;
-                self.set_argument(dest_mode, 3, a + b)?;
+            Add(mode1, mode2, mode3) => {
+                let a = self.get_argument(mode1, 1)?;
+                let b = self.get_argument(mode2, 2)?;
+                self.set_argument(mode3, 3, a + b)?;
                 self.cursor += 4;
             }
-            Multiply(lmode, rmode, dest_mode) => {
-                let a = self.get_argument(lmode, 1)?;
-                let b = self.get_argument(rmode, 2)?;
-                self.set_argument(dest_mode, 3, a * b)?;
+            Multiply(mode1, mode2, mode3) => {
+                let a = self.get_argument(mode1, 1)?;
+                let b = self.get_argument(mode2, 2)?;
+                self.set_argument(mode3, 3, a * b)?;
                 self.cursor += 4;
             }
-            Input(dest_mode) => {
+            Input(mode) => {
                 let val = self.input.pop().ok_or(ExecutionError::MissingInput)?;
-                self.set_argument(dest_mode, 1, val)?;
+                self.set_argument(mode, 1, val)?;
                 self.cursor += 2;
             }
             Output(mode) => {
                 let val = self.get_argument(mode, 1)?;
                 self.output.push(val);
                 self.cursor += 2;
+            }
+            JumpIfTrue(mode1, mode2) => {
+                let a = self.get_argument(mode1, 1)?;
+                if a != 0 {
+                    self.cursor = Self::as_index(self.get_argument(mode2, 2)?)?;
+                } else {
+                    self.cursor += 3;
+                }
+            }
+            JumpIfFalse(mode1, mode2) => {
+                let a = self.get_argument(mode1, 1)?;
+                if a == 0 {
+                    self.cursor = Self::as_index(self.get_argument(mode2, 2)?)?;
+                } else {
+                    self.cursor += 3;
+                }
+            }
+            LessThan(mode1, mode2, mode3) => {
+                let a = self.get_argument(mode1, 1)?;
+                let b = self.get_argument(mode2, 2)?;
+                self.set_argument(mode3, 3, (a < b) as i32)?;
+                self.cursor += 4;
+            }
+            Equals(mode1, mode2, mode3) => {
+                let a = self.get_argument(mode1, 1)?;
+                let b = self.get_argument(mode2, 2)?;
+                self.set_argument(mode3, 3, (a == b) as i32)?;
+                self.cursor += 4;
             }
             Halt => {
                 self.halted = true;
@@ -110,6 +138,7 @@ impl VirtualMachine {
         idx.try_into().map_err(|_| ExecutionError::InvalidAddress)
     }
 
+    #[allow(dead_code)]
     pub fn memory(&self) -> &[i32] {
         &self.tape
     }
