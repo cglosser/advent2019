@@ -22,7 +22,7 @@ impl VirtualMachine {
             tape: tape.into(),
             cursor: 0,
             halted: false,
-            input: input.unwrap_or(Vec::new()),
+            input: input.unwrap_or(Vec::new()).into(),
             output: Vec::new(),
         }
     }
@@ -38,26 +38,23 @@ impl VirtualMachine {
     pub fn step(&mut self) -> Result<()> {
         use Operation::*;
 
-        let opcode = self.get_cell(self.cursor)?;
+        let opcode = self.get_word(self.cursor)?;
         match Operation::try_from(opcode)? {
-            Add(lmode, rmode) => {
-                let left = self.get_argument(lmode, 1)?;
-                let right = self.get_argument(rmode, 2)?;
-                let dest = self.get_argument(ParameterMode::Immediate, 3)?;
-                self.set_cell(Self::as_index(dest)?, left + right)?;
+            Add(lmode, rmode, dest_mode) => {
+                let a = self.get_argument(lmode, 1)?;
+                let b = self.get_argument(rmode, 2)?;
+                self.set_argument(dest_mode, 3, a + b)?;
                 self.cursor += 4;
             }
-            Multiply(lmode, rmode) => {
-                let left = self.get_argument(lmode, 1)?;
-                let right = self.get_argument(rmode, 2)?;
-                let dest = self.get_argument(ParameterMode::Immediate, 3)?;
-                self.set_cell(Self::as_index(dest)?, left * right)?;
+            Multiply(lmode, rmode, dest_mode) => {
+                let a = self.get_argument(lmode, 1)?;
+                let b = self.get_argument(rmode, 2)?;
+                self.set_argument(dest_mode, 3, a * b)?;
                 self.cursor += 4;
             }
-            Input => {
-                let dest = self.get_argument(ParameterMode::Position, 1)?;
-                let val = self.input.pop().ok_or(ExecutionError::InputError)?;
-                self.set_cell(Self::as_index(dest)?, val)?;
+            Input(dest_mode) => {
+                let val = self.input.pop().ok_or(ExecutionError::MissingInput)?;
+                self.set_argument(dest_mode, 1, val)?;
                 self.cursor += 2;
             }
             Output(mode) => {
@@ -74,43 +71,51 @@ impl VirtualMachine {
 
     fn get_argument(&self, mode: ParameterMode, offset: usize) -> Result<i32> {
         match mode {
-            ParameterMode::Immediate => self.access(self.cursor + offset),
-            ParameterMode::Position => self.access_by_pointer(self.cursor + offset),
+            ParameterMode::Immediate => self.get_word(self.cursor + offset),
+            ParameterMode::Position => self.get_word_by_pointer(self.cursor + offset),
         }
     }
 
-    fn access(&self, idx: usize) -> Result<i32> {
+    fn set_argument(&mut self, mode: ParameterMode, offset: usize, value: i32) -> Result<()> {
+        match mode {
+            ParameterMode::Immediate => Err(ExecutionError::ImmediateModeWrite),
+            ParameterMode::Position => self.set_word_by_pointer(self.cursor + offset, value),
+        }
+    }
+
+    pub fn get_word(&self, idx: usize) -> Result<i32> {
         self.tape
             .get(idx)
             .map(|i| *i)
             .ok_or(ExecutionError::InvalidAddress)
     }
 
-    fn as_index<T: std::convert::TryInto<usize>>(idx: T) -> Result<usize> {
-        idx.try_into().map_err(|_| ExecutionError::InvalidAddress)
+    fn get_word_by_pointer(&self, idx: usize) -> Result<i32> {
+        let pointer = self.get_word(idx)?;
+        self.get_word(Self::as_index(pointer)?)
     }
 
-    fn access_by_pointer(&self, idx: usize) -> Result<i32> {
-        let pointer = self.access(idx)?;
-        self.access(pointer as usize)
-    }
-
-    pub fn set_cell(&mut self, idx: usize, value: i32) -> Result<()> {
+    pub fn set_word(&mut self, idx: usize, value: i32) -> Result<()> {
         self.tape
             .get_mut(idx)
             .map(|i| *i = value)
             .ok_or(ExecutionError::InvalidAddress)
     }
 
-    pub fn get_cell(&self, idx: usize) -> Result<i32> {
-        self.tape
-            .get(idx)
-            .map(|i| *i)
-            .ok_or(ExecutionError::InvalidAddress)
+    fn set_word_by_pointer(&mut self, idx: usize, value: i32) -> Result<()> {
+        self.set_word(Self::as_index(self.get_word(idx)?)?, value)
+    }
+
+    fn as_index<T: std::convert::TryInto<usize>>(idx: T) -> Result<usize> {
+        idx.try_into().map_err(|_| ExecutionError::InvalidAddress)
     }
 
     pub fn memory(&self) -> &[i32] {
         &self.tape
+    }
+
+    pub fn output(&self) -> &[i32] {
+        &self.output
     }
 }
 

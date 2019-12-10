@@ -1,7 +1,8 @@
 #[derive(Debug, Clone, PartialEq)]
 pub enum ExecutionError {
+    ImmediateModeWrite,
     InvalidAddress,
-    InputError,
-    UnknownOpcode(i32),
+    MissingInput,
     UnknownMode(u8),
+    UnknownOpcode(i32),
 }
