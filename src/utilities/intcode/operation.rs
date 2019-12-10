@@ -6,6 +6,10 @@ pub enum Operation {
     Multiply(ParameterMode, ParameterMode, ParameterMode),
     Input(ParameterMode),
     Output(ParameterMode),
+    JumpIfTrue(ParameterMode, ParameterMode),
+    JumpIfFalse(ParameterMode, ParameterMode),
+    LessThan(ParameterMode, ParameterMode, ParameterMode),
+    Equals(ParameterMode, ParameterMode, ParameterMode),
     Halt,
 }
 
@@ -28,6 +32,24 @@ impl TryFrom<i32> for Operation {
             4 => Ok(Operation::Output(ParameterMode::try_from_opcode(
                 opcode, 0,
             )?)),
+            5 => Ok(Operation::JumpIfTrue(
+                ParameterMode::try_from_opcode(opcode, 0)?,
+                ParameterMode::try_from_opcode(opcode, 1)?,
+            )),
+            6 => Ok(Operation::JumpIfFalse(
+                ParameterMode::try_from_opcode(opcode, 0)?,
+                ParameterMode::try_from_opcode(opcode, 1)?,
+            )),
+            7 => Ok(Operation::LessThan(
+                ParameterMode::try_from_opcode(opcode, 0)?,
+                ParameterMode::try_from_opcode(opcode, 1)?,
+                ParameterMode::try_from_opcode(opcode, 2)?,
+            )),
+            8 => Ok(Operation::Equals(
+                ParameterMode::try_from_opcode(opcode, 0)?,
+                ParameterMode::try_from_opcode(opcode, 1)?,
+                ParameterMode::try_from_opcode(opcode, 2)?,
+            )),
             99 => Ok(Operation::Halt),
             _ => Err(ExecutionError::UnknownOpcode(opcode)),
         }
