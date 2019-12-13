@@ -27,4 +27,9 @@ fn main() {
         "Day 05: {:?}",
         day05.run(include_str!("../inputs/day05.txt"))
     );
+    let day12 = day12::Day12 {};
+    println!(
+        "Day 12: {:?}",
+        day12.run(include_str!("../inputs/day12.txt"))
+    );
 }
