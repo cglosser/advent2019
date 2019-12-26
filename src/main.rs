@@ -1,6 +1,9 @@
 mod solutions;
 use solutions::*;
 
+#[macro_use]
+extern crate lazy_static;
+
 mod utilities;
 
 fn main() {
