@@ -8,7 +8,7 @@ impl Solution for Day07 {
         System::from_str(input).maximum_signal().to_string()
     }
 
-    fn part_two(&self, input: &str) -> String {
+    fn part_two(&self, _input: &str) -> String {
         String::from("NOT IMPLEMENTED - 07b")
     }
 }
@@ -34,7 +34,7 @@ impl System {
         for phase in phases {
             let input = Some(vec![signal, *phase]);
             let mut vm = intcode::VirtualMachine::new(self.program.clone(), input);
-            vm.run();
+            vm.run().unwrap();
             signal = *vm.output().first().unwrap();
         }
 
