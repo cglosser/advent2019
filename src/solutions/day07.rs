@@ -9,7 +9,7 @@ impl Solution for Day07 {
     }
 
     fn part_two(&self, input: &str) -> String {
-        String::from("Hello - 07b")
+        String::from("NOT IMPLEMENTED - 07b")
     }
 }
 
