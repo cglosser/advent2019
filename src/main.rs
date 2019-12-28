@@ -1,6 +1,9 @@
 mod solutions;
 use solutions::*;
 
+#[macro_use]
+extern crate itertools;
+
 mod utilities;
 
 fn main() {
